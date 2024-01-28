@@ -4,11 +4,13 @@
 package chistaticmiddleware
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // Logger interface defines the logging mechanism. It can be implemented by any logging library
@@ -22,6 +24,7 @@ type Logger interface {
 // StaticFS refers to the file system (which can be embedded) containing the static files.
 // StaticRoot specifies the root directory within the file system for the static files.
 // StaticFilePrefix is the URL prefix used to serve static files.
+// CacheDuration is the duration for which the static files are cached.
 //
 // The Debug flag enables additional logging for troubleshooting, and Logger is an interface
 // for a custom logging mechanism. If Logger is nil and Debug is true, a default logger is used.
@@ -29,6 +32,7 @@ type Config struct {
 	StaticFS         fs.FS
 	StaticRoot       string
 	StaticFilePrefix string
+	CacheDuration    time.Duration
 
 	Debug  bool
 	Logger Logger
@@ -75,6 +79,12 @@ func (m *StaticMiddleware) serveStaticFiles(w http.ResponseWriter, r *http.Reque
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Set Cache-Control header if CacheDuration is specified
+	if m.config.CacheDuration > 0 {
+		cacheControlValue := fmt.Sprintf("public, max-age=%d", int(m.config.CacheDuration.Seconds()))
+		w.Header().Set("Cache-Control", cacheControlValue)
 	}
 
 	fileServer := http.FileServer(http.FS(staticFS))
