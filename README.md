@@ -15,7 +15,7 @@ Chi Static Middleware is a Go package designed to work with the Chi router for s
 To install Chi Static Middleware, use the following command:
 
 ```bash
-go get github.com/yarlson/chistaticmiddleware
+go get github.com/yarlson/chistaticmiddleware@v0.1.0
 ```
 
 ## Usage
