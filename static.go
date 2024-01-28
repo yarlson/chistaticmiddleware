@@ -60,8 +60,14 @@ func (m *StaticMiddleware) Handler() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasPrefix(r.URL.Path, m.config.StaticFilePrefix) {
+				if m.config.Debug {
+					m.config.Logger.Printf("Serving static file: %s", r.URL.Path)
+				}
 				m.serveStaticFiles(w, r)
 			} else {
+				if m.config.Debug {
+					m.config.Logger.Printf("Passing request to next handler: %s", r.URL.Path)
+				}
 				next.ServeHTTP(w, r)
 			}
 		})

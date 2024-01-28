@@ -61,6 +61,8 @@ func TestHandler(t *testing.T) {
 		StaticFS:         mockFS,
 		StaticRoot:       "static",
 		StaticFilePrefix: "/static",
+		Debug:            true,
+		CacheDuration:    365 * 24 * time.Hour,
 	}
 	staticMiddleware := NewStaticMiddleware(staticConfig)
 
