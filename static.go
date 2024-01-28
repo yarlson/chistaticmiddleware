@@ -90,18 +90,3 @@ func (m *StaticMiddleware) serveStaticFiles(w http.ResponseWriter, r *http.Reque
 	fileServer := http.FileServer(http.FS(staticFS))
 	http.StripPrefix(m.config.StaticFilePrefix, fileServer).ServeHTTP(w, r)
 }
-
-// Example usage:
-// func main() {
-//     r := chi.NewRouter()
-//     staticConfig := chistaticmiddleware.Config{
-//         StaticFS:        <YourFileSystem>,
-//         StaticRoot:      "path/to/static/files",
-//         StaticFilePrefix: "/static",
-//         Debug:           true,
-//         Logger:          nil, // or your custom logger
-//     }
-//     staticMiddleware := chistaticmiddleware.NewStaticMiddleware(staticConfig)
-//     r.Use(staticMiddleware.Handler())
-//     // Continue setting up routes and start the server
-// }
