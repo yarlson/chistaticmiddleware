@@ -15,7 +15,7 @@ Chi Static Middleware is a Go package designed to work with the Chi router for s
 To install Chi Static Middleware, use the following command:
 
 ```bash
-go get github.com/yarlson/chistaticmiddleware@v0.2.0
+go get github.com/yarlson/chistaticmiddleware@v0.3.0
 ```
 
 ## Usage
@@ -27,7 +27,7 @@ First, import the package along with Chi:
 ```go
 import (
     "github.com/go-chi/chi/v5"
-    "github.com/yarlson/chistaticmiddleware"
+    "github.com/yarlson/chistaticmiddleware/static"
 )
 ```
 
@@ -36,7 +36,7 @@ import (
 Set the cache duration for your static files to control browser caching. This is particularly useful for optimizing load times and reducing server load.
 
 ```go
-staticConfig := chistaticmiddleware.Config{
+staticConfig := static.Config{
     // ... other config settings ...
     CacheDuration: 24 * time.Hour, // Cache static files for 24 hours
 }
@@ -50,26 +50,25 @@ To serve files from a physical file system, configure the middleware like so:
 package main
 
 import (
-    "github.com/go-chi/chi/v5"
-    "github.com/yarlson/chistaticmiddleware"
-    "os"
-    "time"
+	"github.com/go-chi/chi/v5"
+	"github.com/yarlson/chistaticmiddleware/static"
+	"os"
+	"time"
 )
 
 func main() {
-    r := chi.NewRouter()
+	r := chi.NewRouter()
 
-    staticConfig := chistaticmiddleware.Config{
-        StaticFS:         os.DirFS("path/to/static/files"),
-        StaticRoot:       "", // use "" for the root
-        StaticFilePrefix: "/static",
-        CacheDuration:    24 * time.Hour, // Optional: Cache for 24 hours
-    }
+	staticConfig := static.Config{
+		Fs:            os.DirFS("path/to/static/files"),
+		Root:          "", // use "" for the root
+		FilePrefix:    "/static",
+		CacheDuration: 24 * time.Hour, // Optional: Cache for 24 hours
+	}
 
-    staticMiddleware := chistaticmiddleware.NewStaticMiddleware(staticConfig)
-    r.Use(staticMiddleware.Handler())
+	r.Use(static.Handler(staticConfig))
 
-    // setup other routes and start server...
+	// setup other routes and start server...
 }
 ```
 
@@ -81,29 +80,28 @@ If you're using Go 1.16 or later, serve static files from an embedded file syste
 package main
 
 import (
-    "embed"
-    "github.com/go-chi/chi/v5"
-    "github.com/yarlson/chistaticmiddleware"
-    "time"
+	"embed"
+	"github.com/go-chi/chi/v5"
+	"github.com/yarlson/chistaticmiddleware/static"
+	"time"
 )
 
 //go:embed path/to/static/files/*
 var staticFiles embed.FS
 
 func main() {
-    r := chi.NewRouter()
+	r := chi.NewRouter()
 
-    staticConfig := chistaticmiddleware.Config{
-        StaticFS:         staticFiles,
-        StaticRoot:       "path/to/static/files",
-        StaticFilePrefix: "/static",
-        CacheDuration:    24 * time.Hour, // Optional: Cache for 24 hours
-    }
+	staticConfig := static.Config{
+		Fs:            staticFiles,
+		Root:          "path/to/static/files",
+		FilePrefix:    "/static",
+		CacheDuration: 24 * time.Hour, // Optional: Cache for 24 hours
+	}
 
-    staticMiddleware := chistaticmiddleware.NewStaticMiddleware(staticConfig)
-    r.Use(staticMiddleware.Handler())
+	r.Use(static.Handler(staticConfig))
 
-    // setup other routes and start server...
+	// setup other routes and start server...
 }
 ```
 
@@ -112,7 +110,7 @@ func main() {
 Enable debugging by setting the `Debug` flag in the configuration:
 
 ```go
-staticConfig := chistaticmiddleware.Config{
+staticConfig := static.Config{
     // ... other config
     Debug: true,
 }
@@ -127,7 +125,11 @@ type CustomLogger struct {
     // implementation of the Logger interface
 }
 
-staticConfig := chistaticmiddleware.Config{
+func (l *CustomLogger) Printf(format string, v ...interface{}) {
+    // implementation
+}
+
+staticConfig := static.Config{
     // ... other config
     Logger: &CustomLogger{},
 }

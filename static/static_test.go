@@ -1,4 +1,4 @@
-package chistaticmiddleware
+package static
 
 import (
 	"github.com/go-chi/chi/v5"
@@ -9,44 +9,7 @@ import (
 	"time"
 )
 
-// TestNewStaticMiddleware tests the initialization of the StaticMiddleware.
-func TestNewStaticMiddleware(t *testing.T) {
-	tests := []struct {
-		name      string
-		config    Config
-		wantDebug bool
-	}{
-		{
-			name: "With Debug and No Logger",
-			config: Config{
-				Debug: true,
-			},
-			wantDebug: true,
-		},
-		{
-			name: "Without Debug and No Logger",
-			config: Config{
-				Debug: false,
-			},
-			wantDebug: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := NewStaticMiddleware(tt.config)
-			if got.config.Debug != tt.wantDebug {
-				t.Errorf("NewStaticMiddleware().Debug = %v, want %v", got.config.Debug, tt.wantDebug)
-			}
-
-			if tt.wantDebug && got.config.Logger == nil {
-				t.Errorf("Expected logger to be set when Debug is true")
-			}
-		})
-	}
-}
-
-// TestHandler tests the handling of requests by the StaticMiddleware.
+// TestHandler tests the handling of requests by the middleware.
 func TestHandler(t *testing.T) {
 	// Create a mock file system using fstest.MapFS
 	mockFS := fstest.MapFS{
@@ -58,15 +21,14 @@ func TestHandler(t *testing.T) {
 
 	r := chi.NewRouter()
 	staticConfig := Config{
-		StaticFS:         mockFS,
-		StaticRoot:       "static",
-		StaticFilePrefix: "/static",
-		Debug:            true,
-		CacheDuration:    365 * 24 * time.Hour,
+		Fs:            mockFS,
+		Root:          "static",
+		FilePrefix:    "/static",
+		Debug:         true,
+		CacheDuration: 365 * 24 * time.Hour,
 	}
-	staticMiddleware := NewStaticMiddleware(staticConfig)
 
-	r.Use(staticMiddleware.Handler())
+	r.Use(Handler(staticConfig))
 
 	// Next handler for non-static routes
 	nextHandlerCalled := false
@@ -107,7 +69,7 @@ func TestHandler(t *testing.T) {
 	}
 }
 
-// TestHandler404 tests the handling of requests by the StaticMiddleware when the requested file does not exist.
+// TestHandler404 tests the handling of requests by the middleware when the requested file does not exist.
 func TestHandler404(t *testing.T) {
 	// Create a mock file system using fstest.MapFS
 	mockFS := fstest.MapFS{
@@ -119,13 +81,12 @@ func TestHandler404(t *testing.T) {
 
 	r := chi.NewRouter()
 	staticConfig := Config{
-		StaticFS:         mockFS,
-		StaticRoot:       "static",
-		StaticFilePrefix: "/static",
+		Fs:         mockFS,
+		Root:       "static",
+		FilePrefix: "/static",
 	}
-	staticMiddleware := NewStaticMiddleware(staticConfig)
 
-	r.Use(staticMiddleware.Handler())
+	r.Use(Handler(staticConfig))
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		t.Errorf("Expected static handler to be called for matching path")
@@ -146,7 +107,7 @@ func TestHandler404(t *testing.T) {
 	}
 }
 
-// TestHandlerError tests the behavior of the Handler function when fs.Sub(m.config.StaticFS, m.config.StaticRoot) raises an error.
+// TestHandlerError tests the behavior of the Handler function when fs.Sub(m.config.Fs, m.config.Root) raises an error.
 func TestHandlerError(t *testing.T) {
 	// Create a mock file system using fstest.MapFS
 	mockFS := fstest.MapFS{
@@ -158,14 +119,13 @@ func TestHandlerError(t *testing.T) {
 
 	r := chi.NewRouter()
 	staticConfig := Config{
-		StaticFS:         mockFS,
-		StaticRoot:       "./static",
-		StaticFilePrefix: "/static",
-		Debug:            true,
+		Fs:         mockFS,
+		Root:       "./static",
+		FilePrefix: "/static",
+		Debug:      true,
 	}
-	staticMiddleware := NewStaticMiddleware(staticConfig)
 
-	r.Use(staticMiddleware.Handler())
+	r.Use(Handler(staticConfig))
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		t.Errorf("Expected static handler to be called for matching path")
